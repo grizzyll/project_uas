@@ -1,12 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/app_provider.dart';
-import '../../widgets/app_drawer.dart';
-import 'siswa_crud.dart';
-import 'guru_crud.dart';
-import 'jadwal_crud.dart';
-import 'pengumuman_crud.dart';
-import 'package:flutter/material.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});

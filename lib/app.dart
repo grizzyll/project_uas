@@ -8,7 +8,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Felisitas Project UAS',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const LoginScreen(),
+      home: const LoginScreen(selectedRole: '',),
     );
   }
 }

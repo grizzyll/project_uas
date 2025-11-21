@@ -4,7 +4,6 @@ import '../models/siswa.dart';
 import '../models/guru.dart';
 import '../models/jadwal.dart';
 import '../models/pengumuman.dart';
-import '../services/db_service.dart';
 
 class AppProvider extends ChangeNotifier {
   UserRole? _role;
@@ -86,4 +85,8 @@ class AppProvider extends ChangeNotifier {
     await DBService.instance.deletePengumuman(id);
     await loadAll();
   }
+}
+
+class DBService {
+  static get instance => null;
 }

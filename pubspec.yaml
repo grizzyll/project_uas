@@ -15,6 +15,7 @@ dependencies:
   printing: ^5.11.0         # Print/Share PDF
   fl_chart: ^0.63.0         # Ekstra Poin: Grafik
   google_fonts: ^5.0.0      # UI/UX
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:

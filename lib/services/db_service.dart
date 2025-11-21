@@ -1,120 +1,97 @@
-import 'dart:async';
-import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import '../models/siswa.dart';
-import '../models/guru.dart';
-import '../models/jadwal.dart';
-import '../models/nilai.dart';
-import '../models/pengumuman.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+import 'package:path/path.dart';
 
-class DBService {
-  DBService._privateConstructor();
-  static final DBService instance = DBService._privateConstructor();
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._init();
+  static Database? _database;
 
-  static Database? _db;
+  DatabaseHelper._init();
 
-  Future<void> init() async {
-    if (_db != null) return;
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    final path = join(documentsDirectory.path, 'felisitas_uas.db');
-    _db = await openDatabase(path, version: 1, onCreate: _onCreate);
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB('siakad_final.db');
+    return _database!;
   }
 
-  FutureOr<void> _onCreate(Database db, int version) async {
+  Future<Database> _initDB(String filePath) async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, filePath);
+
+    return await openDatabase(path, version: 1, onCreate: _createDB);
+  }
+
+  Future _createDB(Database db, int version) async {
+    // Tabel User
+    await db.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        password TEXT,
+        role TEXT
+      )
+    ''');
+
+    // Tabel Siswa
     await db.execute('''
       CREATE TABLE siswa (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nis TEXT,
+        nis TEXT PRIMARY KEY,
         nama TEXT,
         kelas TEXT,
         jurusan TEXT
       )
     ''');
-    await db.execute('''
-      CREATE TABLE guru (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nip TEXT,
-        nama TEXT,
-        mata_pelajaran TEXT
-      )
-    ''');
-    await db.execute('''
-      CREATE TABLE jadwal (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        hari TEXT,
-        jam TEXT,
-        mata_pelajaran TEXT,
-        guru TEXT
-      )
-    ''');
+
+    // Tabel Nilai
     await db.execute('''
       CREATE TABLE nilai (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        siswa_id INTEGER,
+        nis_siswa TEXT,
         mata_pelajaran TEXT,
         tugas REAL,
         uts REAL,
-        uas REAL
+        uas REAL,
+        FOREIGN KEY (nis_siswa) REFERENCES siswa (nis)
       )
     ''');
-    await db.execute('''
-      CREATE TABLE pengumuman (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        judul TEXT,
-        isi TEXT,
-        tanggal TEXT
-      )
-    ''');
-    // insert sample data (optional)
-    await db.insert('guru', {'nip': 'G001', 'nama': 'Budi', 'mata_pelajaran': 'Matematika'});
-    await db.insert('siswa', {'nis': 'S001', 'nama': 'Ani', 'kelas': '10A', 'jurusan': 'IPA'});
+
+    // INSERT DUMMY DATA (Agar bisa langsung login)
+    await db.insert('users', {'username': 'admin', 'password': '123', 'role': 'admin'});
+    await db.insert('users', {'username': 'guru', 'password': '123', 'role': 'guru'});
+    await db.insert('users', {'username': 'siswa', 'password': '123', 'role': 'siswa'}); // Username siswa pakai NIS nanti di real case
+    
+    // Dummy Siswa untuk User Siswa
+    await db.insert('siswa', {'nis': '12345', 'nama': 'Budi Santoso', 'kelas': '12 RPL', 'jurusan': 'RPL'});
   }
 
-  Database get db => _db!;
-
-  // --- Siswa CRUD ---
-  Future<int> insertSiswa(Siswa s) => db.insert('siswa', s.toMap());
-  Future<List<Siswa>> getAllSiswa() async {
-    final rows = await db.query('siswa', orderBy: 'nama');
-    return rows.map((r) => Siswa.fromMap(r)).toList();
+  // CRUD Helpers
+  Future<List<Map<String, dynamic>>> getAllSiswa() async {
+    final db = await instance.database;
+    return await db.query('siswa');
   }
-  Future<int> updateSiswa(Siswa s) => db.update('siswa', s.toMap(), where: 'id=?', whereArgs: [s.id]);
-  Future<int> deleteSiswa(int id) => db.delete('siswa', where: 'id=?', whereArgs: [id]);
 
-  // --- Guru CRUD ---
-  Future<int> insertGuru(Guru g) => db.insert('guru', g.toMap());
-  Future<List<Guru>> getAllGuru() async {
-    final rows = await db.query('guru', orderBy: 'nama');
-    return rows.map((r) => Guru.fromMap(r)).toList();
+  Future<int> insertSiswa(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('siswa', row);
   }
-  Future<int> updateGuru(Guru g) => db.update('guru', g.toMap(), where: 'id=?', whereArgs: [g.id]);
-  Future<int> deleteGuru(int id) => db.delete('guru', where: 'id=?', whereArgs: [id]);
 
-  // --- Jadwal CRUD ---
-  Future<int> insertJadwal(Jadwal j) => db.insert('jadwal', j.toMap());
-  Future<List<Jadwal>> getAllJadwal() async {
-    final rows = await db.query('jadwal', orderBy: 'hari, jam');
-    return rows.map((r) => Jadwal.fromMap(r)).toList();
+  Future<int> updateNilai(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    // Cek apakah nilai mapel ini sudah ada
+    final cek = await db.query('nilai', 
+      where: 'nis_siswa = ? AND mata_pelajaran = ?', 
+      whereArgs: [row['nis_siswa'], row['mata_pelajaran']]);
+    
+    if (cek.isEmpty) {
+      return await db.insert('nilai', row);
+    } else {
+      return await db.update('nilai', row, 
+        where: 'nis_siswa = ? AND mata_pelajaran = ?',
+        whereArgs: [row['nis_siswa'], row['mata_pelajaran']]);
+    }
   }
-  Future<int> updateJadwal(Jadwal j) => db.update('jadwal', j.toMap(), where: 'id=?', whereArgs: [j.id]);
-  Future<int> deleteJadwal(int id) => db.delete('jadwal', where: 'id=?', whereArgs: [id]);
 
-  // --- Nilai CRUD ---
-  Future<int> insertNilai(Nilai n) => db.insert('nilai', n.toMap());
-  Future<List<Nilai>> getNilaiBySiswa(int siswaId) async {
-    final rows = await db.query('nilai', where: 'siswa_id=?', whereArgs: [siswaId]);
-    return rows.map((r) => Nilai.fromMap(r)).toList();
+  Future<List<Map<String, dynamic>>> getNilaiByNis(String nis) async {
+    final db = await instance.database;
+    return await db.query('nilai', where: 'nis_siswa = ?', whereArgs: [nis]);
   }
-  Future<int> updateNilai(Nilai n) => db.update('nilai', n.toMap(), where: 'id=?', whereArgs: [n.id]);
-  Future<int> deleteNilai(int id) => db.delete('nilai', where: 'id=?', whereArgs: [id]);
-
-  // --- Pengumuman CRUD ---
-  Future<int> insertPengumuman(Pengumuman p) => db.insert('pengumuman', p.toMap());
-  Future<List<Pengumuman>> getAllPengumuman() async {
-    final rows = await db.query('pengumuman', orderBy: 'tanggal DESC');
-    return rows.map((r) => Pengumuman.fromMap(r)).toList();
-  }
-  Future<int> deletePengumuman(int id) => db.delete('pengumuman', where: 'id=?', whereArgs: [id]);
 }
