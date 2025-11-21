@@ -7,14 +7,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  provider: ^6.0.5
-  sqflite: ^2.2.8+4
-  path_provider: ^2.0.15
-  path: ^1.8.3
-  intl: ^0.18.1
-  pdf: ^3.11.0
-  printing: ^5.10.0
-  fl_chart: ^0.55.2
+  provider: ^6.0.0          # State Management
+  sqflite: ^2.2.0           # Local Storage
+  path: ^1.8.0              # Helper path database
+  shared_preferences: ^2.2.0 # Simpan sesi login sederhana
+  pdf: ^3.10.0              # Ekspor PDF
+  printing: ^5.11.0         # Print/Share PDF
+  fl_chart: ^0.63.0         # Ekstra Poin: Grafik
+  google_fonts: ^5.0.0      # UI/UX
 
 dev_dependencies:
   flutter_test:

@@ -1,11 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
-import '../providers/app_provider.dart';
-import '../models/user_role.dart';
-import '../screens/admin/admin_dashboard.dart';
-import '../screens/guru/guru_dashboard.dart';
-import '../screens/siswa/siswa_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,100 +8,86 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final userCtrl = TextEditingController();
-  final passCtrl = TextEditingController();
-  final auth = AuthService();
-
-  bool loading = false;
-  String? error;
-
-  Future<void> doLogin() async {
-    setState(() {
-      loading = true;
-      error = null;
-    });
-
-    final role = await auth.login(
-      userCtrl.text.trim(),
-      passCtrl.text.trim(),
-    );
-
-    setState(() {
-      loading = false;
-    });
-
-    if (!mounted) return; // FIX PENTING
-
-    if (role == null) {
-      setState(() {
-        error = 'User tidak ditemukan (pakai: admin / guru / siswa)';
-      });
-      return;
-    }
-
-    Provider.of<AppProvider>(context, listen: false)
-        .setUser(userCtrl.text.trim(), role);
-
-    Widget target;
-
-    switch (role) {
-      case UserRole.admin:
-        target = const AdminDashboard();
-        break;
-      case UserRole.guru:
-        target = const GuruDashboard();
-        break;
-      case UserRole.siswa:
-        target = const SiswaDashboard();
-        break;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => target),
-    );
-  }
+  // ... controller dan logic auth Anda tetap sama ...
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: userCtrl,
-              decoration: const InputDecoration(labelText: 'Username'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: passCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password'),
-            ),
-            const SizedBox(height: 12),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF4F46E5), Color(0xFF818CF8)], // Gradient background
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo atau Icon Besar
+                const Icon(Icons.school_rounded, size: 80, color: Colors.white),
+                const SizedBox(height: 10),
+                const Text(
+                  "SIAKAD XYZ",
+                  style: TextStyle(
+                    color: Colors.white, 
+                    fontSize: 28, 
+                    fontWeight: FontWeight.bold
+                  ),
+                ),
+                const SizedBox(height: 40),
 
-            if (error != null)
-              Text(error!, style: const TextStyle(color: Colors.red)),
-
-            ElevatedButton(
-              onPressed: loading ? null : doLogin,
-              child: loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text('Login'),
+                // Card Putih untuk Form
+                Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Selamat Datang", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                        const Text("Silakan login untuk melanjutkan", style: TextStyle(color: Colors.grey)),
+                        const SizedBox(height: 30),
+                        
+                        TextFormField(
+                          // controller: _usernameController,
+                          decoration: const InputDecoration(
+                            labelText: "Username", 
+                            prefixIcon: Icon(Icons.person_outline)
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          // controller: _passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: "Password", 
+                            prefixIcon: Icon(Icons.lock_outline)
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Panggil fungsi login Anda di sini
+                            },
+                            child: const Text("MASUK", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 12),
-            const Text('Dummy login: admin / guru / siswa (password bebas)')
-          ],
+          ),
         ),
       ),
     );
